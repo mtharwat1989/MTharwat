@@ -107,6 +107,15 @@ html.calm .score-ring circle{transition:none!important}
 .exp b{color:#F5D67B;font-weight:900}
 .exp i{color:#67e8f9;font-style:normal;font-weight:800;direction:ltr;unicode-bidi:isolate}
 .exp-pg{margin-top:8px;font-size:12px;color:rgba(255,255,255,.55)}
+.cel-layer{position:fixed;inset:0;pointer-events:none;z-index:92;overflow:hidden}
+.cel-emo{position:absolute;bottom:-60px;opacity:0;animation:celUp 2s ease-out forwards}
+@keyframes celUp{0%{transform:translateY(0) rotate(0);opacity:0}15%{opacity:1}100%{transform:translateY(-95vh) rotate(25deg);opacity:0}}
+.cel-big{position:absolute;top:36%;left:50%;transform:translateX(-50%);font-size:46px;font-weight:900;color:#F5D67B;text-shadow:0 4px 24px rgba(212,175,55,.9),0 0 8px #000;white-space:nowrap;animation:celBig 1.7s ease forwards}
+@keyframes celBig{0%{transform:translateX(-50%) scale(.3);opacity:0}25%{transform:translateX(-50%) scale(1.15);opacity:1}70%{transform:translateX(-50%) scale(1);opacity:1}100%{transform:translateX(-50%) scale(1.1) translateY(-30px);opacity:0}}
+.cel-glow{box-shadow:0 0 0 2px rgba(34,197,94,.6),0 0 34px rgba(34,197,94,.5)}
+.opt.correct{animation:optPop .7s ease}
+@keyframes optPop{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
+@media(max-width:480px){.cel-big{font-size:32px}}
 </style>
 </head>
 <body>
@@ -417,7 +426,7 @@ grid.appendChild(b);
 const fb=document.getElementById('feedbackBox'), ex=document.getElementById('explainBox');
 fb.classList.add('hidden'); ex.classList.add('hidden');
 if(st.done){
-if(st.firstCorrect){ fb.classList.remove('hidden'); fb.className='mt-5 rounded-2xl p-5 text-center font-black text-lg pop feedback-ok'; fb.innerHTML=`🎉 ${st.successMsg||'أحسنت كمّل يا بطل! 🏆'}<div class="text-xs font-bold text-green-200 mt-1">إجابة صحيحة من ${st.attempts===0?'أول محاولة':'المحاولة '+(st.attempts+1)} • +${st.attempts===0?10:5} XP</div>`; }
+if(st.firstCorrect){ fb.classList.remove('hidden'); fb.className='mt-5 rounded-2xl p-5 text-center font-black text-lg pop feedback-ok cel-glow'; fb.innerHTML=`🎉✨ ${st.successMsg||'أحسنت كمّل يا بطل! 🏆'} ✨🎉<div class="text-xs font-bold text-green-200 mt-1">إجابة صحيحة من ${st.attempts===0?'أول محاولة':'المحاولة '+(st.attempts+1)} • +${st.attempts===0?10:5} XP</div>`; }
 else if(mode==='exam'){ fb.classList.remove('hidden'); fb.className='mt-5 rounded-2xl p-5 text-center font-black text-lg pop feedback-bad'; fb.innerHTML=`💪 حاول مرة أخرى يا بطل في السؤال القادم!<div class="text-sm mt-1">الإجابة الصحيحة: <b class="text-green-300">${q.opts.en[q.correct]}</b></div>`; }
 showExplain();
 if(st.finalDone && !st.firstCorrect){ fb.classList.remove('hidden'); fb.className='mt-5 rounded-2xl p-5 text-center font-black text-lg pop feedback-ok'; fb.innerHTML=`👏 أحسنت! وصلت للصح بعد التعلم 💡<div class="text-xs mt-1 text-white/70">أول إجابة كانت خاطئة (محسوبة للمراجعة) لكن إصرارك بطولي — أكمل!</div>`; }
@@ -429,6 +438,23 @@ document.getElementById('qCard').classList.remove('shake');
 }
 function showExplain(){ const q=QUESTIONS[qi]; const ex=document.getElementById('explainBox'); ex.classList.remove('hidden'); const d=q.xd; ex.innerHTML=`<div class="exp"><div class="exp-head">💡 الشرح المبسّط</div><div class="exp-ans">✅ الإجابة الصحيحة: ${q.opts.en[q.correct]}</div><div class="exp-sec s1"><span class="ic">🔎</span><div><div class="tt">الشرح</div>${d.w}</div></div><div class="exp-sec s2"><span class="ic">🌍</span><div><div class="tt">في الواقع</div>${d.r}</div></div><div class="exp-sec s3"><span class="ic">🧠</span><div><div class="tt">للحفظ</div>${d.t}</div></div><div class="exp-pg">📖 صفحة ${q.page} من الكتاب</div></div>`; }
 
+function celebrate(first){
+ try{
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce) return;
+  if(typeof confetti==='function'){
+   const cols=['#D4AF37','#F5D67B','#FFF6C8','#22c55e','#ffffff','#38bdf8','#f472b6'];
+   confetti({particleCount:90,spread:80,origin:{y:.65},colors:cols});
+   confetti({particleCount:40,angle:60,spread:60,origin:{x:0,y:.7},colors:cols});
+   confetti({particleCount:40,angle:120,spread:60,origin:{x:1,y:.7},colors:cols});
+  }
+  const emo=['🎉','⭐','🏆','✨','🎊','🌟','👏'];
+  const wrap=document.createElement('div'); wrap.className='cel-layer';
+  for(let k=0;k<16;k++){ const e=document.createElement('span'); e.className='cel-emo'; e.textContent=emo[k%emo.length]; e.style.left=(4+Math.random()*92)+'%'; e.style.fontSize=(22+Math.random()*26)+'px'; e.style.animationDelay=(Math.random()*.5)+'s'; e.style.animationDuration=(1.6+Math.random())+'s'; wrap.appendChild(e); }
+  const big=document.createElement('div'); big.className='cel-big'; big.textContent=first?'🎉 أحسنت! 🎉':'👏 أحسنت!'; wrap.appendChild(big);
+  document.body.appendChild(wrap); setTimeout(()=>wrap.remove(),2800);
+ }catch(e){}
+}
 function answer(i){
 startTimer(); playClick();
 const q=QUESTIONS[qi], st=state[qi];
@@ -441,7 +467,7 @@ if(i===q.correct){
 if(st.first===i){ st.firstCorrect=true; correctFirst++; streak++; bestStreak=Math.max(bestStreak,streak); xp+=10; st.successMsg=successPhrases[Math.floor(Math.random()*successPhrases.length)]; }
 else { st.firstCorrect=false; streak=0; xp+=5; if(!st.successMsg) st.successMsg=successPhrases[Math.floor(Math.random()*successPhrases.length)]; }
 st.chosen=i; st.done=true; st.finalDone=true;
-playSuccess(); smallConfetti();
+playSuccess(); celebrate(st.first===i);
 if(streak>0 && streak%5===0){ goldConfettiBig(); showCheer(`🔥 سلسلة نارية ${streak} إجابات!`,`واصل يا بطل! أنت تقترب من العلامة الكاملة بسرعة الصاروخ 🚀`); }
 else if(st.first===i && Math.random()<.28){ goldConfettiBig(); }
 toast(`✅ <span class="gold-text">أحسنت كمّل يا بطل!</span> 🏆`);
